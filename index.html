@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>영상에서 사람 수 감지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+  <style>
+    #video {
+      max-width: 100%;
+      display: block;
+      margin-bottom: 10px;
+    }
+    #personCount {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>영상에서 사람 수 감지</h1>
+  <input type="file" accept="video/*" id="videoUpload">
+  <video id="video" controls></video>
+  <div id="personCount">사람 수: 0</div>
+
+  <script>
+    const video = document.getElementById('video');
+    const personCountDisplay = document.getElementById('personCount');
+    let model;
+
+    async function loadModel() {
+      model = await cocoSsd.load();
+      console.log('모델 로드 완료');
+    }
+
+    document.getElementById('videoUpload').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const fileURL = URL.createObjectURL(file);
+        video.src = fileURL;
+        video.addEventListener('loadeddata', analyzeVideo);
+      }
+    });
+
+    async function analyzeVideo() {
+      while (!video.paused && !video.ended) {
+        const predictions = await model.detect(video);
+        const personCount = predictions.filter(pred => pred.class === 'person').length;
+        personCountDisplay.innerText = `사람 수: ${personCount}`;
+        await new Promise(resolve => setTimeout(resolve, 200)); // 200ms 대기
+      }
+    }
+
+    loadModel();
+  </script>
+</body>
+</html>
